@@ -49,6 +49,10 @@ It aims to streamline inventory management, reduce manual dependency, and provid
 
 ---
 
+## 🖼️ Project Visuals
+
+<img width="1536" height="1024" alt="ChatGPT Image Oct 20, 2025, 05_21_28 PM" src="https://github.com/user-attachments/assets/a1bba039-6cfd-42cc-af8c-abfbe64e5ccc" />
+
 ## 🧠 System Architecture
 
            ┌────────────────────────┐
@@ -191,10 +195,6 @@ Software Engineer
 
 ## 🪶 License
 This project is licensed under the MIT License – you are free to use and modify it.
-
-## 🖼️ Project Visuals
-
-<img width="1536" height="1024" alt="ChatGPT Image Oct 20, 2025, 05_21_28 PM" src="https://github.com/user-attachments/assets/a1bba039-6cfd-42cc-af8c-abfbe64e5ccc" />
 
 ## ⭐ How to Contribute
 
