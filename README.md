@@ -177,6 +177,23 @@ cd backend
 gcloud builds submit --tag gcr.io/<your-project-id>/delta-backend
 gcloud run deploy delta-backend --image gcr.io/<your-project-id>/delta-backend --platform managed
 
+## Backend Dependencies (Spring Boot)
+Below are the dependencies used in the Delta Internal Inventory Portal backend:
+
+- Spring Web – for REST API development
+- Spring Data JPA – for database access
+- PostgreSQL Driver – database connectivity
+- Spring Security – JWT + role-based access
+- Spring Mail – for sending OTPs
+- Lombok – to reduce boilerplate code
+- ZXing – for QR code generation
+- Spring Boot DevTools – auto reload during development
+- Spring Boot Actuator – app monitoring
+- Spring Boot Validation – input validation
+- Spring Boot Test – testing support
+- Flyway – (optional) for database migrations
+
+
 ## 🧭 Future Enhancements
 
 🧾 Generate and print QR codes for products
@@ -236,4 +253,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,  
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN  
 THE SOFTWARE.
-
