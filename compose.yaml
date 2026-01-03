@@ -1,0 +1,25 @@
+services:
+  mysql:
+    image: 'mysql:latest'
+    environment:
+      - 'MYSQL_DATABASE=deltacoolingdb'
+      - 'MYSQL_PASSWORD=E35623101009k.'
+      - 'MYSQL_ROOT_PASSWORD=verysecret'
+      - 'MYSQL_USER=enock'
+    ports:
+      - '3306:3306'
+
+  elasticsearch:
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:7.17.10'
+    environment:
+      - 'ELASTIC_PASSWORD=secret'
+      - 'discovery.type=single-node'
+      - 'xpack.security.enabled=false'
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+
+  ollama:
+    image: 'ollama/ollama:latest'
+    ports:
+      - '11434:11434'
