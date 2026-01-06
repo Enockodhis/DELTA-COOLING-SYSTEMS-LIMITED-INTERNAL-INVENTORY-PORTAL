@@ -74,16 +74,16 @@ public class UserController {
             throw new UserException("First name cannot be empty");
         }
 
-        if (userDto.getFullName() != null && userDto.getFullName().trim().isEmpty()) {
-            throw new UserException("Full name cannot be empty");
+        if (userDto.getLastName() != null && userDto.getLastName().trim().isEmpty()) {
+            throw new UserException("Last name cannot be empty");
         }
 
         // Update allowed fields
         if (userDto.getFirstName() != null) {
             user.setFirstName(userDto.getFirstName());
         }
-        if (userDto.getFullName() != null) {
-            user.setFullName(userDto.getFullName());
+        if (userDto.getLastName() != null) {
+            user.setLastName(userDto.getLastName());
         }
         if (userDto.getPhone() != null) {
             user.setPhone(userDto.getPhone());

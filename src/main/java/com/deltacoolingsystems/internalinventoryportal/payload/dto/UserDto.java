@@ -8,8 +8,8 @@ import java.time.LocalDateTime;
 public class UserDto {
     private Long id;
     private String firstName;      // Make sure this exists
-    private String fullName;       // Make sure this exists
-    // private String lastName;    // Add if you need it
+    private String lastName;
+    private String fullName;
     private String email;
     private String phone;
     private UserRole role;

@@ -85,7 +85,7 @@ public class AuthServiceImpl implements AuthService {
         authResponse.setJwt(jwt);
         authResponse.setMessage("Registered Successfully");
 
-        // Use the updated UserMapper that includes firstName and fullName
+        // Use the updated UserMapper that includes firstName and LastName
         authResponse.setUser(UserMapper.toDTO(savedUser));
 
         log.info("Signup completed successfully for: {}", savedUser.getEmail());
@@ -332,8 +332,8 @@ public class AuthServiceImpl implements AuthService {
             throw new UserException("First name is required");
         }
 
-        if (userDto.getFullName() == null || userDto.getFullName().trim().isEmpty()) {
-            throw new UserException("Full name is required");
+        if (userDto.getLastName() == null || userDto.getLastName().trim().isEmpty()) {
+            throw new UserException("Last name is required");
         }
 
         if (userDto.getEmail() == null || userDto.getEmail().trim().isEmpty()) {
@@ -360,9 +360,23 @@ public class AuthServiceImpl implements AuthService {
 
         // Set required fields
         user.setFirstName(userDto.getFirstName());
-        user.setFullName(userDto.getFullName());
+        user.setLastName(userDto.getLastName());
         user.setEmail(userDto.getEmail());
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+
+        // Set fullName - create it from firstName + lastName
+        String fullName;
+        if (userDto.getFullName() != null && !userDto.getFullName().trim().isEmpty()) {
+            // Use provided fullName
+            fullName = userDto.getFullName().trim();
+        } else {
+            // Create fullName from firstName + lastName
+            fullName = userDto.getFirstName().trim();
+            if (userDto.getLastName() != null && !userDto.getLastName().trim().isEmpty()) {
+                fullName += " " + userDto.getLastName().trim();
+            }
+        }
+        user.setFullName(fullName);
 
         // Set optional fields with defaults
         user.setRole(userDto.getRole() != null ? userDto.getRole() : UserRole.USER);
@@ -379,7 +393,7 @@ public class AuthServiceImpl implements AuthService {
 
     // Optional: Add a helper method to verify data
     private void logUserDetails(User user) {
-        log.debug("User Details - ID: {}, FirstName: {}, FullName: {}, Email: {}, Role: {}",
-                user.getId(), user.getFirstName(), user.getFullName(), user.getEmail(), user.getRole());
+        log.debug("User Details - ID: {}, FirstName: {}, LastName: {}, Email: {}, Role: {}",
+                user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getRole());
     }
 }

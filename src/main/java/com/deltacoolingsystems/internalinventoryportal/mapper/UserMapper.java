@@ -13,8 +13,8 @@ public class UserMapper {
         UserDto userDto = new UserDto();
         userDto.setId(user.getId());
         userDto.setFirstName(user.getFirstName());      // ADD THIS
-        userDto.setFullName(user.getFullName());        // ADD THIS
-        // userDto.setLastName(user.getLastName());     // Add if you have lastName field
+        userDto.setLastName(user.getLastName());
+        userDto.setFullName(user.getFullName());
         userDto.setEmail(user.getEmail());
         userDto.setPhone(user.getPhone());
         userDto.setRole(user.getRole());
@@ -36,8 +36,8 @@ public class UserMapper {
 
         User user = new User();
         user.setFirstName(userDto.getFirstName());
-        user.setFullName(userDto.getFullName());
-        // user.setLastName(userDto.getLastName()); // Add if you have lastName
+//        user.setFullName(userDto.getFullName());  Add if you have FullName
+        user.setLastName(userDto.getLastName());
         user.setEmail(userDto.getEmail());
         user.setPhone(userDto.getPhone());
         user.setRole(userDto.getRole());
