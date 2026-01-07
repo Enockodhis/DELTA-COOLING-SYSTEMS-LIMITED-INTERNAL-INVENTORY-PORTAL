@@ -11,9 +11,9 @@ import com.deltacoolingsystems.internalinventoryportal.repository.UserRepository
 import com.deltacoolingsystems.internalinventoryportal.service.AuthService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -81,12 +81,12 @@ public class AuthServiceImpl implements AuthService {
 
         String jwt = jwtProvider.generateToken(authentication);
 
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setJwt(jwt);
-        authResponse.setMessage("Registered Successfully");
-
-        // Use the updated UserMapper that includes firstName and LastName
-        authResponse.setUser(UserMapper.toDTO(savedUser));
+        // FIXED: Using your factory method which sets success=true
+        AuthResponse authResponse = AuthResponse.success(
+                jwt,
+                "Registered Successfully",
+                UserMapper.toDTO(savedUser)
+        );
 
         log.info("Signup completed successfully for: {}", savedUser.getEmail());
         return authResponse;
@@ -99,40 +99,55 @@ public class AuthServiceImpl implements AuthService {
         String email = userDto.getEmail();
         String password = userDto.getPassword();
 
-        // Validate login request
+        // Validate login request with clear error messages
         if (email == null || email.trim().isEmpty()) {
             throw new UserException("Email is required");
         }
+
         if (password == null || password.trim().isEmpty()) {
             throw new UserException("Password is required");
         }
 
-        Authentication authentication = authenticate(email, password);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        try {
+            // Validate email format
+            if (!email.contains("@") || !email.contains(".")) {
+                throw new UserException("Please enter a valid email address");
+            }
 
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        String role = authorities.isEmpty() ? "" : authorities.iterator().next().getAuthority();
+            Authentication authentication = authenticate(email, password);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = jwtProvider.generateToken(authentication);
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+            String jwt = jwtProvider.generateToken(authentication);
 
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new UserException("User not found");
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                // This shouldn't happen if authenticate() succeeded, but handle it anyway
+                log.error("User authenticated but not found in database: {}", email);
+                throw new UserException("User account not found");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            user.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(user);
+
+            AuthResponse authResponse = AuthResponse.success(
+                    jwt,
+                    "Login Successful",
+                    UserMapper.toDTO(user)
+            );
+
+            log.info("Login successful for: {}", email);
+            return authResponse;
+
+        } catch (UserException e) {
+            // Re-throw specific authentication errors
+            throw e;
+        } catch (Exception e) {
+            // Catch any other unexpected errors
+            log.error("Unexpected login error for {}: {}", email, e.getMessage(), e);
+            throw new UserException("Login failed. Please try again");
         }
-
-        user.setLastLogin(LocalDateTime.now());
-        user.setUpdatedAt(LocalDateTime.now()); // Update this timestamp too
-        userRepository.save(user);
-
-        AuthResponse authResponse = new AuthResponse();
-        authResponse.setJwt(jwt);
-        authResponse.setMessage("Login Successful");
-
-        // Use the updated UserMapper
-        authResponse.setUser(UserMapper.toDTO(user));
-
-        log.info("Login successful for: {}", email);
-        return authResponse;
     }
 
     @Override
@@ -142,7 +157,7 @@ public class AuthServiceImpl implements AuthService {
         // Check if token is blacklisted
         if (isTokenBlacklisted(oldToken)) {
             log.warn("Attempt to refresh blacklisted token");
-            throw new UserException("Token is invalid");
+            throw new UserException("Token is invalid or has been revoked");
         }
 
         try {
@@ -163,7 +178,7 @@ public class AuthServiceImpl implements AuthService {
                 log.info("Refreshing expired token for user: {}", email);
             } catch (Exception e) {
                 log.error("Invalid token format: {}", e.getMessage());
-                throw new UserException("Invalid token");
+                throw new UserException("Invalid token format");
             }
 
             if (email == null || email.trim().isEmpty()) {
@@ -173,13 +188,13 @@ public class AuthServiceImpl implements AuthService {
             // Load user details
             UserDetails userDetails = customUserImplementation.loadUserByUsername(email);
             if (userDetails == null) {
-                throw new UserException("User not found");
+                throw new UserException("User account no longer exists");
             }
 
             // Check if user exists in database
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                throw new UserException("User not found in database");
+                throw new UserException("User account not found");
             }
 
             // Blacklist the old token
@@ -199,11 +214,11 @@ public class AuthServiceImpl implements AuthService {
             user.setUpdatedAt(LocalDateTime.now());
             userRepository.save(user);
 
-            // Create response
-            AuthResponse authResponse = new AuthResponse();
-            authResponse.setJwt(newJwt);
-            authResponse.setMessage("Token refreshed successfully");
-            authResponse.setUser(UserMapper.toDTO(user));
+            AuthResponse authResponse = AuthResponse.success(
+                    newJwt,
+                    "Token refreshed successfully",
+                    UserMapper.toDTO(user)
+            );
 
             log.info("Token refreshed successfully for user: {}", email);
             return authResponse;
@@ -211,8 +226,8 @@ public class AuthServiceImpl implements AuthService {
         } catch (UserException e) {
             throw e; // Re-throw UserException
         } catch (Exception e) {
-            log.error("Error refreshing token: {}", e.getMessage());
-            throw new UserException("Failed to refresh token: " + e.getMessage());
+            log.error("Error refreshing token: {}", e.getMessage(), e);
+            throw new UserException("Failed to refresh token. Please login again");
         }
     }
 
@@ -312,12 +327,14 @@ public class AuthServiceImpl implements AuthService {
 
         if (userDetails == null) {
             log.warn("Login failed - email doesn't exist: {}", email);
-            throw new UserException("Invalid email or password");
+            // Clear error message for non-existent account
+            throw new UserException("No account found with this email address");
         }
 
         if (!passwordEncoder.matches(password, userDetails.getPassword())) {
             log.warn("Login failed - password mismatch for: {}", email);
-            throw new UserException("Invalid email or password");
+            // Clear error message for wrong password
+            throw new UserException("The password you entered is incorrect");
         }
 
         return new UsernamePasswordAuthenticationToken(
@@ -340,18 +357,23 @@ public class AuthServiceImpl implements AuthService {
             throw new UserException("Email is required");
         }
 
+        // Validate email format
+        if (!userDto.getEmail().contains("@") || !userDto.getEmail().contains(".")) {
+            throw new UserException("Please enter a valid email address");
+        }
+
         if (userDto.getPassword() == null || userDto.getPassword().trim().isEmpty()) {
             throw new UserException("Password is required");
         }
 
-        // Optional: Password strength validation
+        // Password strength validation
         if (userDto.getPassword().length() < 6) {
             throw new UserException("Password must be at least 6 characters");
         }
 
-        // Optional: Email format validation
-        if (!userDto.getEmail().contains("@")) {
-            throw new UserException("Invalid email format");
+        // Optional: Add more password validation
+        if (userDto.getPassword().length() > 50) {
+            throw new UserException("Password is too long (maximum 50 characters)");
         }
     }
 
