@@ -148,6 +148,8 @@ CREATE TABLE products (
    https://portal.deltacooling.co.ke/product/{code}
 3. The frontend calls:
    GET /api/products/{code}
+
+QR Scan → Check Local DB → If not found → Redirect to External Sources → Capture Data → Store in DB → Return Info
 The product details are fetched and displayed — name, description, image, quantity, and Amazon link if available.
 
 ## 📁 Folder Structure
