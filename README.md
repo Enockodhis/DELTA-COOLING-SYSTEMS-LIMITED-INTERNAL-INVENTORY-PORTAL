@@ -151,6 +151,12 @@ CREATE TABLE products (
 
 QR Scan → Check Local DB → If not found → Redirect to External Sources → Capture Data → Store in DB → Return Info
 The product details are fetched and displayed — name, description, image, quantity, and Amazon link if available.
+User Uploads Image/QR Code → Your Backend → Multiple Data Sources → Cleaned Results → User
+        ↓                         ↓              ↓                        ↓
+     QR/Barcode             Scrapes Amazon      Scrapes          Unified, formatted
+     OCR Scanning           Scrapes Walmart     Google           product information
+                           Scrapes eBay
+                           Checks your DB
 
 ## 📁 Folder Structure
 
